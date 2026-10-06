@@ -790,30 +790,65 @@ function renderCollaborative() {
 }
 
 function renderFilters() {
-  const visible =
-    getFilteredMovies();
+  const visible = getFilteredMovies();
 
-  const container =
-    document.getElementById('movieList');
+  const container = document.getElementById('movieList');
+  const resultCount = document.getElementById('resultCount');
+  const filterMessage = document.getElementById('filterMessage');
 
   if (!container) return;
 
-  container.innerHTML =
-    visible
-      .map(buildMovieCard)
-      .join('');
+  // Show the filtered movies
+  container.innerHTML = visible
+    .map(buildMovieCard)
+    .join('');
 
+  // If no movies match
   if (!visible.length) {
     container.innerHTML = `
       <div class="empty-state">
         <h3>No titles found</h3>
-        <p>
-          Try changing your search or filters.
-        </p>
+        <p>Try changing your search or filters.</p>
       </div>
     `;
   }
 
+  // Update result count
+  if (resultCount) {
+    resultCount.textContent =
+      `${visible.length} ${visible.length === 1 ? 'title' : 'titles'}`;
+  }
+
+  // Build a visible description of active filters
+  const activeFilters = [];
+
+  if (state.query.trim()) {
+    activeFilters.push(`Search: "${state.query.trim()}"`);
+  }
+
+  if (state.genre !== 'All') {
+    activeFilters.push(`Genre: ${state.genre}`);
+  }
+
+  if (state.year !== 'All') {
+    activeFilters.push(`Year: ${state.year}`);
+  }
+
+  if (state.rating !== 'All') {
+    activeFilters.push(`Rating: ${state.rating}`);
+  }
+
+  if (filterMessage) {
+    if (activeFilters.length > 0) {
+      filterMessage.textContent =
+        activeFilters.join(' • ');
+    } else {
+      filterMessage.textContent =
+        'Showing all movies';
+    }
+  }
+
+  // Keep both search boxes synchronized
   if (
     filterInput &&
     filterInput.value !== state.query
@@ -825,8 +860,7 @@ function renderFilters() {
     filterInputSecondary &&
     filterInputSecondary.value !== state.query
   ) {
-    filterInputSecondary.value =
-      state.query;
+    filterInputSecondary.value = state.query;
   }
 }
 
@@ -1261,7 +1295,17 @@ function attachHandlers() {
       event => {
         if (event.key === 'Enter') {
           event.preventDefault();
-          openTopSearchMatch();
+
+          renderFilters();
+
+          const library = document.getElementById('movieList');
+
+          if (library) {
+            library.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }
         }
       }
     );
@@ -1288,41 +1332,59 @@ function attachHandlers() {
     );
   }
 
-  if (genreFilter) {
-    genreFilter.addEventListener(
-      'change',
-      event => {
-        state.genre =
-          event.target.value;
+    if (genreFilter) {
+      genreFilter.addEventListener(
+        'change',
+        event => {
+          state.genre = event.target.value;
 
-        renderFilters();
-      }
-    );
-  }
+          renderFilters();
 
-  if (yearFilter) {
-    yearFilter.addEventListener(
-      'change',
-      event => {
-        state.year =
-          event.target.value;
+          document
+            .getElementById('movieList')
+            ?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+        }
+      );
+    }
 
-        renderFilters();
-      }
-    );
-  }
+    if (yearFilter) {
+      yearFilter.addEventListener(
+        'change',
+        event => {
+          state.year = event.target.value;
 
-  if (ratingFilter) {
-    ratingFilter.addEventListener(
-      'change',
-      event => {
-        state.rating =
-          event.target.value;
+          renderFilters();
 
-        renderFilters();
-      }
-    );
-  }
+          document
+            .getElementById('movieList')
+            ?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+        }
+      );
+    }
+
+    if (ratingFilter) {
+      ratingFilter.addEventListener(
+        'change',
+        event => {
+          state.rating = event.target.value;
+
+          renderFilters();
+
+          document
+            .getElementById('movieList')
+            ?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+        }
+      );
+    }
 
   document.addEventListener(
     'click',

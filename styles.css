@@ -159,3 +159,37 @@ footer{padding:54px 4% 70px;color:#777;border-top:1px solid rgba(255,255,255,.05
         padding-right: 16px;
     }
 }
+
+/* =========================
+   FILTER STATUS
+   ========================= */
+
+.filter-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+
+    margin: 10px 0 28px;
+    padding: 0 4px;
+
+    color: #b3b3b3;
+    font-size: 0.9rem;
+}
+
+.filter-status strong {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+#filterMessage {
+    color: #b3b3b3;
+}
+
+@media (max-width: 700px) {
+    .filter-status {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 5px;
+    }
+}
