@@ -1,4 +1,5 @@
 @echo off
+setlocal
 title MovieMate Recommendation System
 
 echo ==========================================
@@ -6,42 +7,36 @@ echo        MovieMate Recommendation System
 echo ==========================================
 echo.
 
-REM Check that Python is installed
-py --version >nul 2>&1
+set "PY_CMD=py"
+py -3.14 --version >nul 2>&1
+if not errorlevel 1 set "PY_CMD=py -3.14"
 
+%PY_CMD% --version >nul 2>&1
 if errorlevel 1 (
     echo Python was not found.
-    echo.
-    echo Please install Python first from:
-    echo https://www.python.org/downloads/
-    echo.
+    echo Install Python, then run this file again.
     pause
     exit /b 1
 )
 
 echo Python detected.
 echo.
-
-REM Install project dependencies
-echo Checking required Python packages...
-py -m pip install -r requirements.txt
+echo Installing/checking required packages...
+%PY_CMD% -m pip install -r requirements.txt
 
 if errorlevel 1 (
     echo.
-    echo Failed to install project dependencies.
+    echo Dependency installation failed.
     pause
     exit /b 1
 )
 
 echo.
-echo Dependencies are ready.
-echo.
 echo Starting MovieMate...
 echo.
-echo Open your browser at:
+echo Open this address in your browser:
 echo http://127.0.0.1:5000
 echo.
-
-py app.py
+%PY_CMD% app.py
 
 pause
