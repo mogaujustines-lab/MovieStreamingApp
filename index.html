@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MovieMate | Intelligent Movie Recommendations</title>
+    <meta name="description" content="MovieMate is an intelligent recommendation platform for discovering personalised movies." />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <div class="container navbar">
+        <div class="brand">
+          <div class="brand-mark">🎬</div>
+          <span>MovieMate</span>
+        </div>
+
+        <nav class="nav-links">
+          <a href="#home">Home</a>
+          <a href="#discover">Discover</a>
+          <a href="#analytics">Analytics</a>
+          <a href="#profile">Profile</a>
+        </nav>
+
+        <div class="nav-actions">
+          <button class="btn btn-secondary" data-action="auth-open" data-mode="login">Sign in</button>
+          <button class="btn btn-primary" data-action="auth-open" data-mode="register">Get started</button>
+        </div>
+      </div>
+    </header>
+
+    <main id="home">
+      <section class="hero">
+        <div class="container hero-shell">
+          <div>
+            <div class="kicker">Smart recommendations</div>
+            <h1>Discover movies that match <span>your taste.</span></h1>
+            <p>
+              MovieMate uses content similarity, user preferences, and viewing patterns to bring
+              you the next movie worth watching.
+            </p>
+
+            <div class="search-box">
+              <span>🔍</span>
+              <input id="searchInput" type="text" placeholder="Search for movies, genres, actors, or directors..." />
+            </div>
+
+            <div class="hero-stats">
+              <div class="stat">
+                <strong>12k+</strong>
+                <span>Movie titles</span>
+              </div>
+              <div class="stat">
+                <strong>82%</strong>
+                <span>Match score</span>
+              </div>
+              <div class="stat">
+                <strong>24/7</strong>
+                <span>Recommendations</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="feature-panel">
+            <div class="feature-banner">
+              <img id="featuredPoster" class="feature-poster" alt="Featured movie poster" />
+              <div class="feature-overlay"></div>
+              <div class="feature-content">
+                <div class="feature-meta">Trending now</div>
+                <h2 id="featuredTitle" style="margin: 0; font-size: clamp(1.8rem, 2.2vw, 3rem);">The Dark Knight</h2>
+              </div>
+            </div>
+
+            <div class="feature-card">
+              <h3 id="featureCardTitle">Popular with MovieMate viewers</h3>
+              <p id="featureCardText">Start with highly rated picks, then save or rate movies to build your personal recommendations.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="discover">
+        <div class="container">
+          <div class="section-header">
+            <h2>Featured picks</h2>
+            <span id="featuredPicksSubtitle">Popular picks to get you started</span>
+          </div>
+
+          <div id="newUserBanner" class="panel" style="margin-bottom: 18px;"></div>
+
+          <div class="filter-bar">
+            <div class="filter-group">
+              <label for="searchInputSecondary">Search</label>
+              <input id="searchInputSecondary" type="text" placeholder="Try Batman, Sci-Fi, or Drama" />
+            </div>
+            <div class="filter-group">
+              <label for="genreFilter">Genre</label>
+              <select id="genreFilter"></select>
+            </div>
+            <div class="filter-group">
+              <label for="yearFilter">Year</label>
+              <select id="yearFilter"></select>
+            </div>
+            <div class="filter-group">
+              <label for="ratingFilter">Rating</label>
+              <select id="ratingFilter"></select>
+            </div>
+          </div>
+
+          <div class="section-header">
+            <h2>Trending</h2>
+            <span>Top-rated right now</span>
+          </div>
+          <div id="trendingList" class="movie-grid"></div>
+
+          <div class="section-header" style="margin-top: 28px;">
+            <h2>Recommended for you</h2>
+            <span id="recommendationSubtitle">Popular with viewers</span>
+          </div>
+          <div id="recommendedList" class="movie-grid"></div>
+
+          <div class="section-header" style="margin-top: 28px;" id="collaborativeSection" hidden>
+            <h2>Because other MovieMate fans liked</h2>
+            <span>Based on similar viewers' ratings</span>
+          </div>
+          <div id="collaborativeList" class="movie-grid"></div>
+
+
+
+          <div class="section-header" style="margin-top: 28px;">
+            <h2>Browse the library</h2>
+            <span>Curated collection</span>
+          </div>
+          <div id="movieList" class="movie-grid"></div>
+        </div>
+      </section>
+
+      <section class="section" id="analytics">
+        <div class="container">
+          <div class="section-header">
+            <h2>MovieMate analytics</h2>
+            <span>System overview</span>
+          </div>
+
+          <div class="analytics">
+            <div class="panel">
+              <h3>Recommendation performance</h3>
+              <p style="margin: 6px 0 0; color: var(--muted); font-size: 0.85rem;">F1@4 on 34 simulated users</p>
+              <div class="score-grid">
+                <div class="score-card">
+                  <span class="label">Content</span>
+                  <strong>36.4%</strong>
+                </div>
+                <div class="score-card">
+                  <span class="label">Collaborative</span>
+                  <strong>27.3%</strong>
+                </div>
+                <div class="score-card">
+                  <span class="label">Hybrid (0.7 / 0.3)</span>
+                  <strong>40.6%</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h3>Top genres</h3>
+              <div class="bar-list">
+                <div class="bar-item">
+                  <div class="bar-row"><span>Action</span><span>32%</span></div>
+                  <div class="bar-track"><div class="bar-fill" style="width: 32%;"></div></div>
+                </div>
+                <div class="bar-item">
+                  <div class="bar-row"><span>Drama</span><span>25%</span></div>
+                  <div class="bar-track"><div class="bar-fill" style="width: 25%;"></div></div>
+                </div>
+                <div class="bar-item">
+                  <div class="bar-row"><span>Sci-Fi</span><span>19%</span></div>
+                  <div class="bar-track"><div class="bar-fill" style="width: 19%;"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="profile">
+        <div class="container">
+          <div class="section-header">
+            <h2>My profile</h2>
+            <span>Preferences and ratings</span>
+          </div>
+
+          <div class="profile-row">
+            <div class="profile-panel">
+              <h3>Favourite genres</h3>
+              <div id="genreTags" class="tag-list"></div>
+            </div>
+
+            <div class="profile-panel">
+              <h3>Saved movies</h3>
+              <div class="score-card" style="margin-top: 12px;">
+                <span class="label">Favourites</span>
+                <strong id="favoriteMovies">0</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-panel" style="margin-top: 18px;">
+            <h3>My ratings</h3>
+            <div id="ratingList" class="rating-list"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="container">
+        <div>MovieMate © 2026 — Designed for intelligent movie discovery.</div>
+        <small>Poster images from <a href="https://www.themoviedb.org/" target="_blank" rel="noreferrer">TMDB</a>. MovieMate is not endorsed or certified by TMDB.</small>
+      </div>
+    </footer>
+
+    <div id="movieModal" class="modal" aria-modal="true" role="dialog">
+      <div class="modal-content">
+        <div id="modalDetails"></div>
+      </div>
+    </div>
+
+    <div id="authModal" class="modal" aria-modal="true" role="dialog" aria-labelledby="authTitle">
+      <div class="auth-dialog">
+        <button class="close-btn auth-close" data-action="auth-close" aria-label="Close sign in">✕</button>
+        <p class="kicker">Your MovieMate profile</p>
+        <h2 id="authTitle">Welcome back</h2>
+        <p id="authIntro" class="auth-intro">Sign in to pick up where you left off.</p>
+        <form id="authForm">
+          <label id="nameField" class="auth-field" hidden>
+            <span>Your name</span>
+            <input name="name" autocomplete="name" minlength="2" />
+          </label>
+          <label class="auth-field">
+            <span>Email</span>
+            <input name="email" type="email" autocomplete="email" required />
+          </label>
+          <label class="auth-field">
+            <span>Password</span>
+            <input name="password" type="password" autocomplete="current-password" minlength="8" required />
+          </label>
+          <p id="authError" class="auth-error" role="alert"></p>
+          <button id="authSubmit" class="btn btn-primary auth-submit" type="submit">Sign in</button>
+        </form>
+        <button id="authSwitch" class="auth-switch" type="button">New to MovieMate? Create an account</button>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
