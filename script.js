@@ -183,93 +183,182 @@ const modal = document.getElementById('movieModal');
 const modalDetails = document.getElementById('modalDetails');
 const authModal = document.getElementById('authModal');
 const authForm = document.getElementById('authForm');
+
 let authMode = 'login';
 let recommendationRequestId = 0;
 let recommendationTimer = null;
 
-const posterPaths = {
-  1: 'qJ2tW6WMUDux911r6m7haRef0WH', 2: '8RW2runSEc34IwKN2D1l9Tjo6tS',
-  3: 'oYuLEt3zVCKq57qu2F8dT7NIa6f', 4: 'udDclJoHjfjb8Ekgsd4FDteOkCU',
-  5: 'gEU2QniE6E77NI6lCU6MxlNBvIx', 6: 'RYMX2wcKCBAr24UyPD7xwmjaTn',
-  7: 'd5NXSklXo0qyIYkgV94XAgMIckC', 8: '7IiTTgloJzvGI1TAYymCfbfl3vT',
-  9: 'f89U3ADr1oiB1s9GkdPOEpXUk5H', 10: 'bdN3gXuIZYaJP7ftKK2sU0nGqp',
-  11: '8tZYtuWezp8JbcsvHYO0O46tFbo', 12: 'x2FJsf1ElAgr63Y3PNPtJrcmpoe'
-};
-
 function posterFallback(movie) {
-  const palettes = [['#122b3a', '#e86c4f'], ['#32233b', '#f3a24b'], ['#142b4d', '#7ac8db'], ['#321d24', '#e55368']];
+  const palettes = [
+    ['#122b3a', '#e86c4f'],
+    ['#32233b', '#f3a24b'],
+    ['#142b4d', '#7ac8db'],
+    ['#321d24', '#e55368']
+  ];
+
   const palette = palettes[(Number(movie.id) - 1) % palettes.length];
-  const title = String(movie.title || 'Movie').replace(/[&<>"']/g, ' ').slice(0, 24);
-  const genre = String(movie.genre || 'FEATURE').replace(/[&<>"']/g, ' ').toUpperCase().slice(0, 20);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 900">
-    <defs>
-      <linearGradient id="g" x2="0.9" y2="1">
-        <stop stop-color="${palette[0]}"/>
-        <stop offset="1" stop-color="#080d18"/>
-      </linearGradient>
-      <radialGradient id="r">
-        <stop stop-color="${palette[1]}" stop-opacity=".85"/>
-        <stop offset="1" stop-color="${palette[1]}" stop-opacity="0"/>
-      </radialGradient>
-    </defs>
-    <rect width="600" height="900" fill="url(#g)"/>
-    <circle cx="300" cy="450" r="320" fill="url(#r)"/>
-    <text x="300" y="300" fill="#ffffff" fill-opacity="0.85" font-family="Arial,sans-serif" font-size="20" letter-spacing="4" text-anchor="middle">${genre}</text>
-    <text x="300" y="460" fill="#fff" font-family="Georgia,serif" font-weight="bold" font-size="42" text-anchor="middle">${title}</text>
-    <text x="300" y="510" fill="#d9e2ed" font-family="Arial,sans-serif" font-size="18" text-anchor="middle">${movie.year || ''} · MOVIEMATE PICK</text>
-  </svg>`;
+  const title = String(movie.title || 'Movie')
+    .replace(/[&<>"']/g, ' ')
+    .slice(0, 24);
+
+  const genre = String(movie.genre || 'FEATURE')
+    .replace(/[&<>"']/g, ' ')
+    .toUpperCase()
+    .slice(0, 20);
+
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 900">
+      <defs>
+        <linearGradient id="g" x2="0.9" y2="1">
+          <stop stop-color="${palette[0]}"/>
+          <stop offset="1" stop-color="#080d18"/>
+        </linearGradient>
+
+        <radialGradient id="r">
+          <stop stop-color="${palette[1]}" stop-opacity=".85"/>
+          <stop offset="1" stop-color="${palette[1]}" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <rect width="600" height="900" fill="url(#g)"/>
+      <circle cx="300" cy="450" r="320" fill="url(#r)"/>
+
+      <text
+        x="300"
+        y="300"
+        fill="#ffffff"
+        fill-opacity="0.85"
+        font-family="Arial,sans-serif"
+        font-size="20"
+        letter-spacing="4"
+        text-anchor="middle">
+        ${genre}
+      </text>
+
+      <text
+        x="300"
+        y="460"
+        fill="#fff"
+        font-family="Georgia,serif"
+        font-weight="bold"
+        font-size="42"
+        text-anchor="middle">
+        ${title}
+      </text>
+
+      <text
+        x="300"
+        y="510"
+        fill="#d9e2ed"
+        font-family="Arial,sans-serif"
+        font-size="18"
+        text-anchor="middle">
+        ${movie.year || ''} · MOVIEMATE
+      </text>
+    </svg>
+  `;
+
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
 function posterUrl(movie) {
-  const source = (posterPaths[movie.id] && `https://image.tmdb.org/t/p/w500/${posterPaths[movie.id]}.jpg`) || movie.poster;
-  return source || posterFallback(movie);
+  return movie.poster_url || movie.poster || posterFallback(movie);
 }
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, character => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
   })[character]);
 }
 
 function posterMarkup(movie, className = '') {
   const fallback = posterFallback(movie);
-  return `<img class="${className}" src="${posterUrl(movie)}" alt="${movie.title} poster" loading="lazy" onerror="this.onerror=null;this.src='${fallback}'">`;
+
+  return `
+    <img
+      class="${className}"
+      src="${posterUrl(movie)}"
+      alt="${escapeHtml(movie.title)} poster"
+      loading="lazy"
+      onerror="this.onerror=null;this.src='${fallback}'"
+    >
+  `;
 }
 
 function normalizeMovie(movie) {
   const genres = Array.isArray(movie.genres)
     ? movie.genres
-    : String(movie.genres || movie.genre || 'General').split('|').filter(Boolean);
+    : String(movie.genres || movie.genre || 'General')
+        .split('|')
+        .filter(Boolean);
 
   return {
     ...movie,
+    id: Number(movie.id),
     genre: movie.genre || genres[0] || 'General',
     genres,
-    cast: Array.isArray(movie.cast) ? movie.cast : String(movie.cast || '').split('|').filter(Boolean),
-    keywords: Array.isArray(movie.keywords) ? movie.keywords : String(movie.keywords || '').split('|').filter(Boolean),
-    poster: posterPaths[movie.id] && `https://image.tmdb.org/t/p/w500/${posterPaths[movie.id]}.jpg` || movie.poster_url || movie.poster || posterFallback(movie),
+    cast: Array.isArray(movie.cast)
+      ? movie.cast
+      : String(movie.cast || '')
+          .split('|')
+          .filter(Boolean),
+
+    keywords: Array.isArray(movie.keywords)
+      ? movie.keywords
+      : String(movie.keywords || '')
+          .split('|')
+          .filter(Boolean),
+
+    poster:
+      movie.poster_url ||
+      movie.poster ||
+      posterFallback(movie),
+
     rating: Number(movie.rating || 0)
   };
 }
 
 function syncSearchInputs(value) {
   state.query = value;
-  if (filterInput) filterInput.value = value;
-  if (filterInputSecondary) filterInputSecondary.value = value;
+
+  if (filterInput) {
+    filterInput.value = value;
+  }
+
+  if (filterInputSecondary) {
+    filterInputSecondary.value = value;
+  }
+
   renderFilters();
   renderRecommended();
 
   const trimmed = value.trim();
+
   if (trimmed.length > 1) {
     const matches = getFilteredMovies();
+
     if (matches.length >= 1) {
       const topMatchId = normalizeMovie(matches[0]).id;
-      const card = document.querySelector(`.movie-card[data-id="${topMatchId}"]`);
+
+      const card = document.querySelector(
+        `.movie-card[data-id="${topMatchId}"]`
+      );
+
       if (card) {
-        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        card.style.outline = '3px solid var(--primary)';
-        setTimeout(() => { card.style.outline = ''; }, 1400);
+        card.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+
+        card.style.outline = '3px solid #e50914';
+
+        setTimeout(() => {
+          card.style.outline = '';
+        }, 1400);
       }
     }
   }
@@ -277,69 +366,159 @@ function syncSearchInputs(value) {
 
 function renderGenres() {
   const allGenres = movies.flatMap(movie => normalizeMovie(movie).genres);
-  const uniqueGenres = [...new Set(allGenres)].sort((a, b) => a.localeCompare(b));
-  const unique = ['All', ...uniqueGenres];
-  genreFilter.innerHTML = unique
-    .map(genre => `<option value="${genre}">${genre}</option>`)
-    .join('');
 
-    const uniqueYears = [...new Set(movies.map(movie => Number(normalizeMovie(movie).year)))]
-    .sort((a, b) => b - a);
+  const uniqueGenres = [
+    ...new Set(allGenres)
+  ].sort((a, b) => a.localeCompare(b));
+
+  const genres = ['All', ...uniqueGenres];
+
+  if (genreFilter) {
+    genreFilter.innerHTML = genres
+      .map(genre => `
+        <option value="${genre}">
+          ${genre}
+        </option>
+      `)
+      .join('');
+  }
+
+  const uniqueYears = [
+    ...new Set(
+      movies.map(movie => Number(normalizeMovie(movie).year))
+    )
+  ].sort((a, b) => b - a);
+
   const years = ['All', ...uniqueYears.map(String)];
-  yearFilter.innerHTML = years
-    .map(year => `<option value="${year}">${year === 'All' ? 'All years' : year}</option>`)
-    .join('');
+
+  if (yearFilter) {
+    yearFilter.innerHTML = years
+      .map(year => `
+        <option value="${year}">
+          ${year === 'All' ? 'All years' : year}
+        </option>
+      `)
+      .join('');
+  }
 
   const ratings = ['All', '8+', '9+'];
-  ratingFilter.innerHTML = ratings
-    .map(level => `<option value="${level}">${level === 'All' ? 'Any rating' : level}</option>`)
-    .join('');
+
+  if (ratingFilter) {
+    ratingFilter.innerHTML = ratings
+      .map(level => `
+        <option value="${level}">
+          ${level === 'All' ? 'Any rating' : level}
+        </option>
+      `)
+      .join('');
+  }
 }
 
 function getFilteredMovies() {
   const query = state.query.trim().toLowerCase();
+
   return movies.filter(movie => {
     const item = normalizeMovie(movie);
-    const searchText = [item.title, item.genre, item.director, item.description, ...item.cast].join(' ').toLowerCase();
 
-        const matchesQuery = !query || searchText.includes(query);
-    const matchesGenre = state.genre === 'All' || item.genres.includes(state.genre);
-    const matchesYear = state.year === 'All' || String(item.year) === state.year;
+    const searchText = [
+      item.title,
+      item.genre,
+      item.director,
+      item.description,
+      ...item.cast
+    ]
+      .join(' ')
+      .toLowerCase();
+
+    const matchesQuery =
+      !query || searchText.includes(query);
+
+    const matchesGenre =
+      state.genre === 'All' ||
+      item.genres.includes(state.genre);
+
+    const matchesYear =
+      state.year === 'All' ||
+      String(item.year) === state.year;
+
     const matchesRating =
       state.rating === 'All' ||
       (state.rating === '8+' && item.rating >= 8) ||
       (state.rating === '9+' && item.rating >= 9);
 
-    return matchesQuery && matchesGenre && matchesYear && matchesRating;
+    return (
+      matchesQuery &&
+      matchesGenre &&
+      matchesYear &&
+      matchesRating
+    );
   });
 }
 
 function buildMovieCard(movie) {
   const item = normalizeMovie(movie);
-  const isFav = state.favorites.has(item.id);
+  const isFavorite = state.favorites.has(item.id);
   const genre = item.genres[0] || 'General';
 
   return `
     <article class="movie-card" data-id="${item.id}">
       <div class="movie-poster">
         ${posterMarkup(item)}
+
         <div class="movie-overlay"></div>
-        <div class="movie-rating">★ ${Number(item.rating).toFixed(1)}</div>
+
+        <div class="movie-rating">
+          ★ ${item.rating.toFixed(1)}
+        </div>
+
+        <div class="movie-hover-actions">
+          <button
+            class="movie-play-button"
+            data-action="open"
+            data-id="${item.id}"
+            title="View details">
+            ▶
+          </button>
+
+          <button
+            class="movie-circle-button"
+            data-action="favorite"
+            data-id="${item.id}"
+            title="Add to My List">
+            ${isFavorite ? '✓' : '+'}
+          </button>
+        </div>
       </div>
+
       <div class="movie-body">
         <div class="movie-title-row">
-          <h3>${item.title}</h3>
-          <span class="movie-tag">${genre}</span>
+          <h3>${escapeHtml(item.title)}</h3>
         </div>
+
         <div class="movie-meta">
+          <span class="match-text">
+            ${Math.min(99, Math.round(item.rating * 10 + 5))}% Match
+          </span>
+
           <span>${item.year}</span>
           <span>•</span>
-          <span>${item.director}</span>
+          <span>${genre}</span>
         </div>
+
         <div class="movie-footer">
-          <button class="watch-btn" data-action="open" data-id="${item.id}">View</button>
-          <button class="heart" data-action="favorite" data-id="${item.id}" aria-label="Favorite movie">
-            ${isFav ? '♥' : '♡'}
+          <button
+            class="watch-btn"
+            data-action="open"
+            data-id="${item.id}">
+            More Info
+          </button>
+
+          <button
+            class="heart"
+            data-action="favorite"
+            data-id="${item.id}"
+            aria-label="Favorite movie">
+            ${isFavorite ? '♥' : '♡'}
           </button>
         </div>
       </div>
@@ -348,109 +527,252 @@ function buildMovieCard(movie) {
 }
 
 function renderTrending() {
-  const topMovies = [...movies].sort((a, b) => Number(b.rating) - Number(a.rating)).slice(0, 4);
-  trendingList.innerHTML = topMovies.map(buildMovieCard).join('');
-  const featured = normalizeMovie(topMovies[0]);
-  const featuredPoster = document.getElementById('featuredPoster');
-  featuredPoster.src = posterUrl(featured);
-  featuredPoster.onerror = () => {
-    featuredPoster.onerror = null;
-    featuredPoster.src = posterFallback(featured);
-  };
-  featuredPoster.alt = `${featured.title} poster`;
-  document.getElementById('featuredTitle').textContent = featured.title;
-  document.getElementById('featureCardTitle').textContent = state.newUser
-    ? 'Popular with MovieMate viewers'
-    : `Inspired by ${normalizeMovie(state.selectedMovie).title}`;
-  document.getElementById('featureCardText').textContent = state.newUser
-    ? 'Start with highly rated picks, then save or rate movies to build your personal recommendations.'
-    : 'Your saved movies and ratings are shaping the titles recommended for you.';
-  document.getElementById('featuredPicksSubtitle').textContent = state.newUser
-    ? 'Popular picks to get you started'
-    : `Picked for ${state.displayName}`;
+  if (!trendingList) return;
+
+  const topMovies = [...movies]
+    .sort((a, b) => Number(b.rating) - Number(a.rating))
+    .slice(0, 10);
+
+  trendingList.innerHTML = topMovies
+    .map(buildMovieCard)
+    .join('');
+
+  const featured = normalizeMovie(topMovies[0] || movies[0]);
+
+  const featuredPoster =
+    document.getElementById('featuredPoster');
+
+  if (featuredPoster) {
+    featuredPoster.src = posterUrl(featured);
+
+    featuredPoster.onerror = () => {
+      featuredPoster.onerror = null;
+      featuredPoster.src = posterFallback(featured);
+    };
+
+    featuredPoster.alt = `${featured.title} poster`;
+  }
+
+  const featuredTitle =
+    document.getElementById('featuredTitle');
+
+  if (featuredTitle) {
+    featuredTitle.textContent = featured.title;
+  }
+
+  const featureCardTitle =
+    document.getElementById('featureCardTitle');
+
+  if (featureCardTitle) {
+    featureCardTitle.textContent =
+      state.newUser
+        ? 'Popular with MovieMate viewers'
+        : `Inspired by ${normalizeMovie(state.selectedMovie).title}`;
+  }
+
+  const featureCardText =
+    document.getElementById('featureCardText');
+
+  if (featureCardText) {
+    featureCardText.textContent =
+      state.newUser
+        ? 'Start with highly rated picks, then save or rate movies to build your personal recommendations.'
+        : 'Your saved movies and ratings are shaping the titles recommended for you.';
+  }
+
+  const subtitle =
+    document.getElementById('featuredPicksSubtitle');
+
+  if (subtitle) {
+    subtitle.textContent =
+      state.newUser
+        ? 'Popular picks to get you started'
+        : `Picked for ${state.displayName}`;
+  }
 }
 
-
 function renderWelcomeBanner() {
-  const banner = document.getElementById('newUserBanner');
+  const banner =
+    document.getElementById('newUserBanner');
+
   if (!banner) return;
 
   if (state.newUser) {
     banner.innerHTML = `
-      <div style="display:flex; justify-content:space-between; gap:16px; align-items:center; flex-wrap: wrap;">
+      <div class="welcome-banner-content">
+
         <div>
-          <div style="color:#d8c9ff; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;">Welcome aboard</div>
-          <h3 style="margin:0 0 6px; font-size:1.5rem;">Hello, ${escapeHtml(state.displayName)}! Your profile is brand new.</h3>
-          <p style="margin:0; color: var(--muted); line-height:1.6;">Start by exploring popular picks. Once you rate or favourite a movie, MovieMate will personalise recommendations for you.</p>
+          <div class="eyebrow">
+            Welcome to MovieMate
+          </div>
+
+          <h3>
+            Hello, ${escapeHtml(state.displayName)}
+          </h3>
+
+          <p>
+            Explore movies, save favourites and rate titles.
+            MovieMate will learn from your activity and create
+            personalised recommendations.
+          </p>
         </div>
-        <button class="btn btn-primary" data-action="browse-popular">Start exploring</button>
+
+        <button
+          class="btn btn-primary"
+          data-action="browse-popular">
+          Browse Movies
+        </button>
+
       </div>
     `;
   } else {
     banner.innerHTML = `
-      <div style="display:flex; justify-content:space-between; gap:16px; align-items:center; flex-wrap: wrap;">
+      <div class="welcome-banner-content">
+
         <div>
-          <div style="color:#b7ffe9; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;">Personalised</div>
-          <h3 style="margin:0 0 6px; font-size:1.5rem;">Your recommendations are now tailored to your activity.</h3>
+          <div class="eyebrow">
+            Personalised for you
+          </div>
+
+          <h3>
+            Your MovieMate recommendations are ready.
+          </h3>
+
+          <p>
+            Your ratings and favourites are now influencing
+            your recommendations.
+          </p>
         </div>
+
       </div>
     `;
   }
 }
 
 function renderRecommended() {
-  const baseMovie = normalizeMovie(state.selectedMovie || movies[0]);
+  if (!recommendedList) return;
+
+  const baseMovie =
+    normalizeMovie(state.selectedMovie || movies[0]);
 
   const placeholder = [...movies]
     .sort((a, b) => Number(b.rating) - Number(a.rating))
-    .slice(0, 4);
+    .slice(0, 10);
 
-  recommendedList.innerHTML = placeholder.map(buildMovieCard).join('');
-  document.getElementById('recommendationSubtitle').textContent = state.newUser
-    ? 'Popular with viewers'
-    : `Inspired by ${baseMovie.title}`;
+  recommendedList.innerHTML = placeholder
+    .map(buildMovieCard)
+    .join('');
 
-    const requestId = ++recommendationRequestId;
-  const trimmedQuery = state.query.trim();
+  const recommendationSubtitle =
+    document.getElementById('recommendationSubtitle');
+
+  if (recommendationSubtitle) {
+    recommendationSubtitle.textContent =
+      state.newUser
+        ? 'Popular with viewers'
+        : `Inspired by ${baseMovie.title}`;
+  }
+
+  const requestId =
+    ++recommendationRequestId;
+
+  const trimmedQuery =
+    state.query.trim();
+
   clearTimeout(recommendationTimer);
+
   recommendationTimer = setTimeout(() => {
-    const endpoint = (!trimmedQuery && state.user)
-      ? '/api/recommend/hybrid'
-      : `/api/recommendations?${new URLSearchParams({ q: trimmedQuery })}`;
+    const endpoint =
+      !trimmedQuery && state.user
+        ? '/api/recommend/hybrid'
+        : `/api/recommendations?${new URLSearchParams({
+            q: trimmedQuery
+          })}`;
 
     fetch(endpoint)
       .then(response => {
-        if (!response.ok) throw new Error('Recommendation request failed');
+        if (!response.ok) {
+          throw new Error(
+            'Recommendation request failed'
+          );
+        }
+
         return response.json();
       })
       .then(result => {
-        if (requestId !== recommendationRequestId) return;
-        const recommendations = result.recommendations || [];
-        if (recommendations.length) {
-          recommendedList.innerHTML = recommendations.map(buildMovieCard).join('');
+        if (
+          requestId !== recommendationRequestId
+        ) {
+          return;
         }
-        const subtitle =
-          result.matched_movie ? `Similar to ${result.matched_movie}` :
-          result.algorithm === 'hybrid' ? 'Personalised for you (content + collaborative)' :
-          result.algorithm === 'content' ? 'Based on your saved preferences' :
-          state.newUser ? 'Popular with viewers' : 'Based on your saved preferences';
-        document.getElementById('recommendationSubtitle').textContent = subtitle;
+
+        const recommendations =
+          result.recommendations || [];
+
+        if (recommendations.length) {
+          recommendedList.innerHTML =
+            recommendations
+              .map(buildMovieCard)
+              .join('');
+        }
+
+        if (recommendationSubtitle) {
+          if (result.matched_movie) {
+            recommendationSubtitle.textContent =
+              `Similar to ${result.matched_movie}`;
+
+          } else if (
+            result.algorithm === 'hybrid'
+          ) {
+            recommendationSubtitle.textContent =
+              'Personalised using content and collaborative filtering';
+
+          } else if (
+            result.algorithm === 'content'
+          ) {
+            recommendationSubtitle.textContent =
+              'Based on your saved preferences';
+
+          } else {
+            recommendationSubtitle.textContent =
+              state.newUser
+                ? 'Popular with viewers'
+                : 'Recommended for you';
+          }
+        }
       })
-      .catch(error => console.error('Could not load recommendations.', error));
+      .catch(error => {
+        console.error(
+          'Could not load recommendations.',
+          error
+        );
+      });
+
   }, 250);
 }
 
 function renderCollaborative() {
-  const section = document.getElementById('collaborativeSection');
-  const list = document.getElementById('collaborativeList');
+  const section =
+    document.getElementById('collaborativeSection');
+
+  const list =
+    document.getElementById('collaborativeList');
+
   if (!section || !list) return;
 
   fetch('/api/recommend/collaborative')
     .then(response => response.json())
     .then(result => {
-      const recommendations = result.recommendations || [];
+      const recommendations =
+        result.recommendations || [];
+
       if (recommendations.length > 0) {
-        list.innerHTML = recommendations.map(buildMovieCard).join('');
+        list.innerHTML =
+          recommendations
+            .slice(0, 10)
+            .map(buildMovieCard)
+            .join('');
+
         section.hidden = false;
       } else {
         section.hidden = true;
@@ -458,197 +780,453 @@ function renderCollaborative() {
       }
     })
     .catch(error => {
-      console.error('Could not load collaborative recommendations.', error);
+      console.error(
+        'Could not load collaborative recommendations.',
+        error
+      );
+
       section.hidden = true;
     });
 }
 
 function renderFilters() {
-  const visible = getFilteredMovies();
-  const container = document.getElementById('movieList');
-  container.innerHTML = visible.map(buildMovieCard).join('');
+  const visible =
+    getFilteredMovies();
+
+  const container =
+    document.getElementById('movieList');
+
+  if (!container) return;
+
+  container.innerHTML =
+    visible
+      .map(buildMovieCard)
+      .join('');
 
   if (!visible.length) {
-    container.innerHTML = '<div class="panel" style="grid-column:1/-1; text-align:center; color: var(--muted);">No movies match your filters. Try adjusting the search terms.</div>';
+    container.innerHTML = `
+      <div class="empty-state">
+        <h3>No titles found</h3>
+        <p>
+          Try changing your search or filters.
+        </p>
+      </div>
+    `;
   }
 
-  if (filterInput && filterInput.value !== state.query) filterInput.value = state.query;
-  if (filterInputSecondary && filterInputSecondary.value !== state.query) filterInputSecondary.value = state.query;
+  if (
+    filterInput &&
+    filterInput.value !== state.query
+  ) {
+    filterInput.value = state.query;
+  }
+
+  if (
+    filterInputSecondary &&
+    filterInputSecondary.value !== state.query
+  ) {
+    filterInputSecondary.value =
+      state.query;
+  }
 }
 
 async function openMovieModal(movieId) {
-  const selected = normalizeMovie(movies.find(movie => normalizeMovie(movie).id === movieId) || movies[0]);
+  const selected =
+    normalizeMovie(
+      movies.find(
+        movie =>
+          normalizeMovie(movie).id === movieId
+      ) || movies[0]
+    );
+
   state.selectedMovie = selected;
 
   let relatedItems = [];
 
   try {
-    const response = await fetch(`/api/recommend?movie_id=${selected.id}`);
+    const response =
+      await fetch(
+        `/api/recommend?movie_id=${selected.id}`
+      );
+
     if (response.ok) {
-      const recommendations = await response.json();
-      if (Array.isArray(recommendations) && recommendations.length) {
+      const recommendations =
+        await response.json();
+
+      if (
+        Array.isArray(recommendations) &&
+        recommendations.length
+      ) {
         relatedItems = recommendations;
       }
     }
   } catch (error) {
-    console.error('Could not load recommendations from the model.', error);
+    console.error(
+      'Could not load recommendations from the model.',
+      error
+    );
   }
 
-  const generated = relatedItems.slice(0, 3);
-
-  const reasons = [
-    `You selected ${selected.title}.`,
-    `Similar genre: ${selected.genre}.`,
-    `Shared keywords: ${selected.keywords.slice(0, 3).join(', ')}.`,
-    `Content similarity: ${Math.min(95, 65 + (generated[0]?.similarity || generated[0]?.score || 0) * 8).toFixed(0)}%.`
-  ];
+  const generated =
+    relatedItems.slice(0, 6);
 
   modalDetails.innerHTML = `
     <div class="modal-hero">
-      <div class="modal-poster">${posterMarkup(selected)}</div>
+
+      <div class="modal-poster">
+        ${posterMarkup(selected)}
+      </div>
+
       <div class="modal-body">
+
         <div class="modal-header">
+
           <div>
-            <h3>${selected.title}</h3>
+            <div class="modal-match">
+              ${Math.min(
+                99,
+                Math.round(selected.rating * 10 + 5)
+              )}% Match
+            </div>
+
+            <h3>
+              ${escapeHtml(selected.title)}
+            </h3>
+
             <div class="meta-line">
-              <span>⭐ ${Number(selected.rating).toFixed(1)}</span>
+              <span>
+                ⭐ ${selected.rating.toFixed(1)}
+              </span>
+
               <span>•</span>
-              <span>${selected.genre}</span>
+
+              <span>
+                ${selected.year}
+              </span>
+
               <span>•</span>
-              <span>${selected.year}</span>
+
+              <span>
+                ${selected.genre}
+              </span>
             </div>
           </div>
-          <button class="close-btn" id="closeModal" aria-label="Close movie details">✕</button>
+
+          <button
+            class="close-btn"
+            id="closeModal"
+            aria-label="Close movie details">
+            ✕
+          </button>
+
         </div>
 
-        <p class="modal-description">${selected.description}</p>
+        <p class="modal-description">
+          ${escapeHtml(selected.description)}
+        </p>
+
+        <div class="movie-details-list">
+
+          <p>
+            <strong>Director:</strong>
+            ${escapeHtml(selected.director || 'Unknown')}
+          </p>
+
+          <p>
+            <strong>Cast:</strong>
+            ${escapeHtml(
+              selected.cast.join(', ') || 'Unknown'
+            )}
+          </p>
+
+          <p>
+            <strong>Genres:</strong>
+            ${escapeHtml(
+              selected.genres.join(', ')
+            )}
+          </p>
+
+        </div>
 
         <div class="action-row">
-          <button class="btn btn-primary" data-action="rate" data-id="${selected.id}">⭐ Rate</button>
-          <button class="btn btn-secondary" data-action="favorite" data-id="${selected.id}">
-            ${state.favorites.has(selected.id) ? '♥ Favourited' : '♡ Favourite'}
+
+          <button
+            class="btn btn-primary"
+            data-action="rate"
+            data-id="${selected.id}">
+            ⭐ Rate
           </button>
+
+          <button
+            class="btn btn-secondary"
+            data-action="favorite"
+            data-id="${selected.id}">
+            ${
+              state.favorites.has(selected.id)
+                ? '✓ In My List'
+                : '+ My List'
+            }
+          </button>
+
         </div>
 
-        <div class="reason-box">
-          <h4>Why this movie?</h4>
-          <ul>
-            ${reasons.map(reason => `<li>${reason}</li>`).join('')}
-          </ul>
-        </div>
       </div>
+
     </div>
   `;
 
-  const relatedList = generated
-    .map(item => {
-      const movie = normalizeMovie(item);
-      const similarity = item.similarity || Number(item.score || 0).toFixed(1);
-      return `
-        <div class="movie-card" data-id="${movie.id}">
-          <div class="movie-poster">
-            ${posterMarkup(movie)}
-            <div class="movie-overlay"></div>
-            <div class="movie-rating">★ ${Number(movie.rating).toFixed(1)}</div>
-          </div>
-          <div class="movie-body">
-            <div class="movie-title-row">
-              <h3>${movie.title}</h3>
-              <span class="movie-tag">${similarity}</span>
-            </div>
-            <div class="movie-footer">
-              <button class="watch-btn" data-action="open" data-id="${movie.id}">Open</button>
-              <button class="heart" data-action="favorite" data-id="${movie.id}">${state.favorites.has(movie.id) ? '♥' : '♡'}</button>
-            </div>
-          </div>
-        </div>
-      `;
-    })
-    .join('');
+  if (generated.length) {
+    const relatedList =
+      generated
+        .map(buildMovieCard)
+        .join('');
 
-  modalDetails.insertAdjacentHTML('beforeend', `
-    <div class="section" style="padding-top: 0;">
-      <div class="section-header" style="margin-bottom: 12px;">
-        <h2>Because you watched ${selected.title}</h2>
-      </div>
-      <div class="movie-grid">${relatedList}</div>
-    </div>
-  `);
+    modalDetails.insertAdjacentHTML(
+      'beforeend',
+      `
+        <section class="section modal-recommendations">
 
-   modal.classList.add('open');
-  document.body.classList.add('modal-locked');
-  document.getElementById('closeModal').addEventListener('click', closeModal);
+          <div class="section-header">
+
+            <div>
+              <p class="section-kicker">
+                Recommended
+              </p>
+
+              <h2>
+                More like
+                ${escapeHtml(selected.title)}
+              </h2>
+            </div>
+
+          </div>
+
+          <div class="movie-row">
+            ${relatedList}
+          </div>
+
+        </section>
+      `
+    );
+  }
+
+  if (modal) {
+    modal.classList.add('open');
+  }
+
+  document.body.classList.add(
+    'modal-locked'
+  );
+
+  const closeButton =
+    document.getElementById('closeModal');
+
+  if (closeButton) {
+    closeButton.addEventListener(
+      'click',
+      closeModal
+    );
+  }
 }
 
 function closeModal() {
-  modal.classList.remove('open');
-  document.body.classList.remove('modal-locked');
-  modalDetails.innerHTML = '';
+  if (modal) {
+    modal.classList.remove('open');
+  }
+
+  document.body.classList.remove(
+    'modal-locked'
+  );
+
+  if (modalDetails) {
+    modalDetails.innerHTML = '';
+  }
 }
 
 function openTopSearchMatch() {
-  const matches = getFilteredMovies();
+  const matches =
+    getFilteredMovies();
+
   if (matches.length > 0) {
-    const topMatchId = normalizeMovie(matches[0]).id;
+    const topMatchId =
+      normalizeMovie(matches[0]).id;
+
     openMovieModal(topMatchId);
   }
 }
 
 function setAuthMode(mode) {
   authMode = mode;
-  const registering = mode === 'register';
-  document.getElementById('authTitle').textContent = registering ? 'Create your account' : 'Welcome back';
-  document.getElementById('authIntro').textContent = registering
-    ? 'Start with a fresh profile. Your favourites and ratings will be saved.'
-    : 'Sign in to pick up where you left off.';
-  document.getElementById('nameField').hidden = !registering;
-  authForm.elements.name.required = registering;
-  authForm.elements.password.autocomplete = registering ? 'new-password' : 'current-password';
-  document.getElementById('authSubmit').textContent = registering ? 'Create account' : 'Sign in';
-  document.getElementById('authSwitch').textContent = registering
-    ? 'Already have an account? Sign in'
-    : 'New to MovieMate? Create an account';
-  document.getElementById('authError').textContent = '';
+
+  const registering =
+    mode === 'register';
+
+  const authTitle =
+    document.getElementById('authTitle');
+
+  const authIntro =
+    document.getElementById('authIntro');
+
+  const nameField =
+    document.getElementById('nameField');
+
+  const submit =
+    document.getElementById('authSubmit');
+
+  const authSwitch =
+    document.getElementById('authSwitch');
+
+  const authError =
+    document.getElementById('authError');
+
+  if (authTitle) {
+    authTitle.textContent =
+      registering
+        ? 'Create your account'
+        : 'Welcome back';
+  }
+
+  if (authIntro) {
+    authIntro.textContent =
+      registering
+        ? 'Create your profile and start receiving personalised recommendations.'
+        : 'Sign in to continue your MovieMate experience.';
+  }
+
+  if (nameField) {
+    nameField.hidden = !registering;
+  }
+
+  if (authForm?.elements?.name) {
+    authForm.elements.name.required =
+      registering;
+  }
+
+  if (authForm?.elements?.password) {
+    authForm.elements.password.autocomplete =
+      registering
+        ? 'new-password'
+        : 'current-password';
+  }
+
+  if (submit) {
+    submit.textContent =
+      registering
+        ? 'Create account'
+        : 'Sign in';
+  }
+
+  if (authSwitch) {
+    authSwitch.textContent =
+      registering
+        ? 'Already have an account? Sign in'
+        : 'New to MovieMate? Create an account';
+  }
+
+  if (authError) {
+    authError.textContent = '';
+  }
 }
 
 function openAuth(mode) {
   setAuthMode(mode);
-  authModal.classList.add('open');
-  authForm.elements.email.focus();
+
+  if (authModal) {
+    authModal.classList.add('open');
+  }
+
+  if (authForm?.elements?.email) {
+    authForm.elements.email.focus();
+  }
 }
 
 async function persistActivity() {
   if (!state.user) return;
+
   try {
     await fetch('/api/profile', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ favorites: [...state.favorites], ratings: state.userRatings })
+
+      headers: {
+        'Content-Type': 'application/json'
+      },
+
+      body: JSON.stringify({
+        favorites: [
+          ...state.favorites
+        ],
+
+        ratings:
+          state.userRatings
+      })
     });
   } catch (error) {
-    console.error('Could not save profile activity.', error);
+    console.error(
+      'Could not save profile activity.',
+      error
+    );
   }
 }
 
 function applyAccount(payload) {
-  state.user = payload.user;
-  state.displayName = payload.user.name;
-  state.favorites = new Set(payload.favorites || []);
-  state.userRatings = payload.ratings || {};
-  state.newUser = state.favorites.size === 0 && Object.keys(state.userRatings).length === 0;
-  authModal.classList.remove('open');
+  state.user =
+    payload.user;
+
+  state.displayName =
+    payload.user.name;
+
+  state.favorites =
+    new Set(payload.favorites || []);
+
+  state.userRatings =
+    payload.ratings || {};
+
+  state.newUser =
+    state.favorites.size === 0 &&
+    Object.keys(
+      state.userRatings
+    ).length === 0;
+
+  if (authModal) {
+    authModal.classList.remove('open');
+  }
+
   renderWelcomeBanner();
   renderTrending();
   renderRecommended();
+  renderCollaborative();
   renderFilters();
+  renderMyList();
   renderProfile();
-  const accountButton = document.querySelector('[data-action="auth-open"][data-mode="login"]');
-  accountButton.textContent = 'Sign out';
-  accountButton.dataset.action = 'auth-logout';
+
+  const accountButton =
+    document.querySelector(
+      '[data-action="auth-open"][data-mode="login"]'
+    );
+
+  if (accountButton) {
+    const label =
+      accountButton.querySelector(
+        '.profile-label'
+      );
+
+    if (label) {
+      label.textContent =
+        state.displayName;
+    } else {
+      accountButton.textContent =
+        state.displayName;
+    }
+
+    accountButton.dataset.action =
+      'auth-logout';
+  }
 }
 
 function toggleFavorite(movieId) {
-  if (state.favorites.has(movieId)) {
+  if (
+    state.favorites.has(movieId)
+  ) {
     state.favorites.delete(movieId);
   } else {
     state.favorites.add(movieId);
@@ -660,195 +1238,599 @@ function toggleFavorite(movieId) {
   renderRecommended();
   renderCollaborative();
   renderFilters();
+  renderMyList();
   renderProfile();
+
   persistActivity();
 }
 
 function attachHandlers() {
+
   if (filterInput) {
-    filterInput.addEventListener('input', event => {
-      syncSearchInputs(event.target.value);
-    });
-    filterInput.addEventListener('keydown', event => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        openTopSearchMatch();
+    filterInput.addEventListener(
+      'input',
+      event => {
+        syncSearchInputs(
+          event.target.value
+        );
       }
-    });
+    );
+
+    filterInput.addEventListener(
+      'keydown',
+      event => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          openTopSearchMatch();
+        }
+      }
+    );
   }
 
   if (filterInputSecondary) {
-    filterInputSecondary.addEventListener('input', event => {
-      syncSearchInputs(event.target.value);
-    });
-    filterInputSecondary.addEventListener('keydown', event => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        openTopSearchMatch();
+    filterInputSecondary.addEventListener(
+      'input',
+      event => {
+        syncSearchInputs(
+          event.target.value
+        );
       }
-    });
+    );
+
+    filterInputSecondary.addEventListener(
+      'keydown',
+      event => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          openTopSearchMatch();
+        }
+      }
+    );
   }
 
   if (genreFilter) {
-    genreFilter.addEventListener('change', event => {
-      state.genre = event.target.value;
-      renderFilters();
-    });
+    genreFilter.addEventListener(
+      'change',
+      event => {
+        state.genre =
+          event.target.value;
+
+        renderFilters();
+      }
+    );
   }
 
   if (yearFilter) {
-    yearFilter.addEventListener('change', event => {
-      state.year = event.target.value;
-      renderFilters();
-    });
+    yearFilter.addEventListener(
+      'change',
+      event => {
+        state.year =
+          event.target.value;
+
+        renderFilters();
+      }
+    );
   }
 
   if (ratingFilter) {
-    ratingFilter.addEventListener('change', event => {
-      state.rating = event.target.value;
-      renderFilters();
-    });
+    ratingFilter.addEventListener(
+      'change',
+      event => {
+        state.rating =
+          event.target.value;
+
+        renderFilters();
+      }
+    );
   }
 
-  document.addEventListener('click', event => {
-    const actionTarget = event.target.closest('[data-action]');
-    if (!actionTarget) return;
+  document.addEventListener(
+    'click',
+    event => {
+      const actionTarget =
+        event.target.closest(
+          '[data-action]'
+        );
 
-    const action = actionTarget.dataset.action;
-      if (action === 'auth-open') openAuth(actionTarget.dataset.mode);
-      if (action === 'auth-close') authModal.classList.remove('open');
+      if (!actionTarget) return;
+
+      const action =
+        actionTarget.dataset.action;
+
+      if (action === 'auth-open') {
+        openAuth(
+          actionTarget.dataset.mode
+        );
+
+        return;
+      }
+
+      if (action === 'auth-close') {
+        if (authModal) {
+          authModal.classList.remove(
+            'open'
+          );
+        }
+
+        return;
+      }
+
       if (action === 'auth-logout') {
-        fetch('/api/auth/logout', { method: 'POST' });
+        fetch(
+          '/api/auth/logout',
+          {
+            method: 'POST'
+          }
+        );
+
         state.user = null;
         state.favorites.clear();
         state.userRatings = {};
         state.newUser = true;
-        state.displayName = 'New User';
-        actionTarget.textContent = 'Sign in';
-        actionTarget.dataset.action = 'auth-open';
+        state.displayName =
+          'New User';
+
+        const label =
+          actionTarget.querySelector(
+            '.profile-label'
+          );
+
+        if (label) {
+          label.textContent =
+            'Sign in';
+        } else {
+          actionTarget.textContent =
+            'Sign in';
+        }
+
+        actionTarget.dataset.action =
+          'auth-open';
+
+        actionTarget.dataset.mode =
+          'login';
+
         renderWelcomeBanner();
         renderTrending();
         renderRecommended();
+        renderCollaborative();
         renderFilters();
+        renderMyList();
         renderProfile();
+
+        return;
       }
 
-    const movieId = Number(actionTarget.dataset.id);
+      const movieId =
+        Number(
+          actionTarget.dataset.id
+        );
 
-    if (action === 'open') {
-      openMovieModal(movieId);
-    }
+      if (action === 'open') {
+        openMovieModal(movieId);
+      }
 
-    if (action === 'favorite') {
-      toggleFavorite(movieId);
-    }
+      if (action === 'favorite') {
+        toggleFavorite(movieId);
+      }
 
-    if (action === 'browse-popular') {
-      document.getElementById('trendingList').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+      if (
+        action === 'browse-popular'
+      ) {
+        const section =
+          document.getElementById(
+            'trendingList'
+          );
 
-    if (action === 'rate') {
-      const movie = movies.find(item => normalizeMovie(item).id === movieId);
-      if (movie) {
-        const movieItem = normalizeMovie(movie);
-        const newRating = Number(prompt(`Rate ${movieItem.title} from 1 to 5`, state.userRatings[movieItem.id] || '4'));
-        if (!Number.isNaN(newRating) && newRating >= 1 && newRating <= 5) {
-          state.userRatings[movieItem.id] = newRating;
-          state.newUser = false;
-          renderWelcomeBanner();
-          renderProfile();
-          renderRecommended();
-          renderCollaborative();
-          persistActivity();
-          alert(`You rated ${movieItem.title} ${newRating}/5.`);
+        if (section) {
+          section.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      }
+
+      if (action === 'rate') {
+        const movie =
+          movies.find(
+            item =>
+              normalizeMovie(item).id ===
+              movieId
+          );
+
+        if (movie) {
+          const item =
+            normalizeMovie(movie);
+
+          const currentRating =
+            state.userRatings[
+              item.id
+            ] || '4';
+
+          const newRating =
+            Number(
+              prompt(
+                `Rate ${item.title} from 1 to 5`,
+                currentRating
+              )
+            );
+
+          if (
+            !Number.isNaN(newRating) &&
+            newRating >= 1 &&
+            newRating <= 5
+          ) {
+            state.userRatings[
+              item.id
+            ] = newRating;
+
+            state.newUser = false;
+
+            renderWelcomeBanner();
+            renderProfile();
+            renderRecommended();
+            renderCollaborative();
+
+            persistActivity();
+
+            alert(
+              `You rated ${item.title} ${newRating}/5.`
+            );
+          }
         }
       }
     }
-  });
+  );
 
-  modal.addEventListener('click', event => {
-    if (event.target === modal) closeModal();
-  });
+  if (modal) {
+    modal.addEventListener(
+      'click',
+      event => {
+        if (
+          event.target === modal
+        ) {
+          closeModal();
+        }
+      }
+    );
+  }
 
-  authModal.addEventListener('click', event => {
-    if (event.target === authModal) authModal.classList.remove('open');
-  });
+  if (authModal) {
+    authModal.addEventListener(
+      'click',
+      event => {
+        if (
+          event.target === authModal
+        ) {
+          authModal.classList.remove(
+            'open'
+          );
+        }
+      }
+    );
+  }
 
-  document.getElementById('authSwitch').addEventListener('click', () => {
-    setAuthMode(authMode === 'login' ? 'register' : 'login');
-  });
+  const authSwitch =
+    document.getElementById(
+      'authSwitch'
+    );
 
-  authForm.addEventListener('submit', async event => {
-    event.preventDefault();
-    const formData = new FormData(authForm);
-    const payload = Object.fromEntries(formData.entries());
-    const endpoint = authMode === 'register' ? '/api/auth/register' : '/api/auth/login';
-    const submit = document.getElementById('authSubmit');
-    submit.disabled = true;
-    submit.textContent = 'Please wait...';
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Could not complete sign in.');
-      applyAccount(result);
-    } catch (error) {
-      document.getElementById('authError').textContent = error.message;
-    } finally {
-      submit.disabled = false;
-      submit.textContent = authMode === 'register' ? 'Create account' : 'Sign in';
-    }
-  });
+  if (authSwitch) {
+    authSwitch.addEventListener(
+      'click',
+      () => {
+        setAuthMode(
+          authMode === 'login'
+            ? 'register'
+            : 'login'
+        );
+      }
+    );
+  }
+
+  if (authForm) {
+    authForm.addEventListener(
+      'submit',
+      async event => {
+        event.preventDefault();
+
+        const formData =
+          new FormData(authForm);
+
+        const payload =
+          Object.fromEntries(
+            formData.entries()
+          );
+
+        const endpoint =
+          authMode === 'register'
+            ? '/api/auth/register'
+            : '/api/auth/login';
+
+        const submit =
+          document.getElementById(
+            'authSubmit'
+          );
+
+        if (submit) {
+          submit.disabled = true;
+          submit.textContent =
+            'Please wait...';
+        }
+
+        try {
+          const response =
+            await fetch(
+              endpoint,
+              {
+                method: 'POST',
+
+                headers: {
+                  'Content-Type':
+                    'application/json'
+                },
+
+                body:
+                  JSON.stringify(payload)
+              }
+            );
+
+          const result =
+            await response.json();
+
+          if (!response.ok) {
+            throw new Error(
+              result.error ||
+              'Could not complete sign in.'
+            );
+          }
+
+          applyAccount(result);
+
+        } catch (error) {
+
+          const authError =
+            document.getElementById(
+              'authError'
+            );
+
+          if (authError) {
+            authError.textContent =
+              error.message;
+          }
+
+        } finally {
+
+          if (submit) {
+            submit.disabled = false;
+
+            submit.textContent =
+              authMode === 'register'
+                ? 'Create account'
+                : 'Sign in';
+          }
+        }
+      }
+    );
+  }
+}
+
+function renderMyList() {
+  const container = document.getElementById('myListMovies');
+  const section = document.getElementById('myListSection');
+
+  if (!container || !section) return;
+
+  const savedMovies = movies.filter(movie =>
+    state.favorites.has(normalizeMovie(movie).id)
+  );
+
+  if (savedMovies.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <h3>Your list is empty</h3>
+        <p>
+          Click the heart or + button on a movie to save it here.
+        </p>
+      </div>
+    `;
+
+    return;
+  }
+
+  container.innerHTML = savedMovies
+    .map(buildMovieCard)
+    .join('');
 }
 
 function renderProfile() {
-  const favoriteMovies = movies.filter(movie => state.favorites.has(normalizeMovie(movie).id));
-  const userGenreTags = state.newUser ? ['Action', 'Sci-Fi', 'Drama'] : ['Action', 'Sci-Fi', 'Crime', 'Drama'];
-  const ratingList = Object.entries(state.userRatings)
-    .map(([id, score]) => {
-      const movie = movies.find(item => normalizeMovie(item).id === Number(id));
-      return movie ? `<div class="rating-item"><span>${normalizeMovie(movie).title}</span><span class="rating-stars">${'★'.repeat(score)}${'☆'.repeat(5 - score)}</span></div>` : '';
-    })
-    .join('');
+  const favoriteMovies =
+    movies.filter(movie =>
+      state.favorites.has(
+        normalizeMovie(movie).id
+      )
+    );
 
-  document.getElementById('favoriteMovies').textContent = favoriteMovies.length;
-  document.getElementById('genreTags').innerHTML = userGenreTags.map(tag => `<span class="tag">${tag}</span>`).join('');
-  document.getElementById('ratingList').innerHTML = ratingList || '<div class="rating-item"><span>No ratings yet — new users start with popular suggestions.</span></div>';
+  const genreCounts = {};
+
+  favoriteMovies.forEach(movie => {
+    normalizeMovie(movie)
+      .genres
+      .forEach(genre => {
+        genreCounts[genre] =
+          (genreCounts[genre] || 0) + 1;
+      });
+  });
+
+  let userGenreTags =
+    Object.entries(genreCounts)
+      .sort(
+        (a, b) =>
+          b[1] - a[1]
+      )
+      .slice(0, 5)
+      .map(([genre]) => genre);
+
+  if (!userGenreTags.length) {
+    userGenreTags = [
+      'Action',
+      'Sci-Fi',
+      'Drama'
+    ];
+  }
+
+  const ratingList =
+    Object.entries(
+      state.userRatings
+    )
+      .map(
+        ([id, score]) => {
+          const movie =
+            movies.find(
+              item =>
+                normalizeMovie(item).id ===
+                Number(id)
+            );
+
+          if (!movie) return '';
+
+          const item =
+            normalizeMovie(movie);
+
+          return `
+            <div class="rating-item">
+
+              <span>
+                ${escapeHtml(item.title)}
+              </span>
+
+              <span class="rating-stars">
+                ${'★'.repeat(score)}
+                ${'☆'.repeat(5 - score)}
+              </span>
+
+            </div>
+          `;
+        }
+      )
+      .join('');
+
+  const favoriteCount =
+    document.getElementById(
+      'favoriteMovies'
+    );
+
+  if (favoriteCount) {
+    favoriteCount.textContent =
+      favoriteMovies.length;
+  }
+
+  const genreTags =
+    document.getElementById(
+      'genreTags'
+    );
+
+  if (genreTags) {
+    genreTags.innerHTML =
+      userGenreTags
+        .map(
+          tag => `
+            <span class="tag">
+              ${tag}
+            </span>
+          `
+        )
+        .join('');
+  }
+
+  const ratingContainer =
+    document.getElementById(
+      'ratingList'
+    );
+
+  if (ratingContainer) {
+    ratingContainer.innerHTML =
+      ratingList ||
+      `
+        <div class="rating-item">
+          <span>
+            No ratings yet.
+            Rate a movie to improve
+            your recommendations.
+          </span>
+        </div>
+      `;
+  }
 }
 
 async function loadMovies() {
   try {
-    const response = await fetch('/api/movies');
-    if (!response.ok) throw new Error('API request failed');
-    const data = await response.json();
-    if (Array.isArray(data) && data.length) {
-      movies = data.map(normalizeMovie);
-      state.selectedMovie = movies[0];
+    const response =
+      await fetch('/api/movies');
+
+    if (!response.ok) {
+      throw new Error(
+        'API request failed'
+      );
     }
+
+    const data =
+      await response.json();
+
+    if (
+      Array.isArray(data) &&
+      data.length
+    ) {
+      movies =
+        data.map(normalizeMovie);
+
+      state.selectedMovie =
+        movies[0];
+    }
+
   } catch (error) {
-    movies = fallbackMovies.map(normalizeMovie);
-    state.selectedMovie = movies[0];
+
+    console.error(
+      'Could not load movies from Flask. Using fallback movies.',
+      error
+    );
+
+    movies =
+      fallbackMovies.map(
+        normalizeMovie
+      );
+
+    state.selectedMovie =
+      movies[0];
   }
 
   try {
-    const response = await fetch('/api/profile');
+    const response =
+      await fetch('/api/profile');
+
     if (response.ok) {
-      const profile = await response.json();
-      if (profile.user) applyAccount(profile);
+      const profile =
+        await response.json();
+
+      if (profile.user) {
+        applyAccount(profile);
+      }
     }
+
   } catch (error) {
-    console.error('Could not restore account session.', error);
+
+    console.error(
+      'Could not restore account session.',
+      error
+    );
   }
 
-  renderGenres();  
+  renderGenres();
   renderWelcomeBanner();
   renderTrending();
   renderRecommended();
   renderCollaborative();
   renderFilters();
+  renderMyList();
   renderProfile();
 }
 
